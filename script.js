@@ -15,15 +15,15 @@ function applyColors(isDarkMode) {
 
 // Crear elementos de chat
 const userListContainer = document.createElement('div');
-userListContainer.style.cssText = 'width: 20%; height: 100vh; float: left; overflow-y: auto; padding: 20px; box-sizing: border-box; background-color: #f0f0f0;';
+userListContainer.style.cssText = 'width: 20%; height: 100vh; overflow-y: auto; padding: 20px; box-sizing: border-box; background-color: #f0f0f0; position: fixed; top: 0; left: 0;';
 document.body.appendChild(userListContainer);
 
 const chatContainer = document.createElement('div');
-chatContainer.style.cssText = 'width: 60%; height: 100vh; float: left; overflow-y: auto; padding: 20px; box-sizing: border-box; background-color: #e0e0e0;';
+chatContainer.style.cssText = 'width: 60%; height: 100vh; overflow-y: auto; padding: 20px; box-sizing: border-box; background-color: #e0e0e0; margin-left: 20%;';
 document.body.appendChild(chatContainer);
 
 const inputContainer = document.createElement('div');
-inputContainer.style.cssText = 'width: 20%; height: 100vh; float: left; padding: 20px; box-sizing: border-box; display: flex; flex-direction: column; justify-content: flex-end; background-color: #f0f0f0;';
+inputContainer.style.cssText = 'width: 60%; position: fixed; bottom: 0; left: 20%; padding: 20px; box-sizing: border-box; display: flex; align-items: center; justify-content: space-between; background-color: #f0f0f0;';
 document.body.appendChild(inputContainer);
 
 const userHeader = document.createElement('h2');
@@ -42,18 +42,18 @@ chatContainer.appendChild(chatMessages);
 const inputField = document.createElement('input');
 inputField.setAttribute('type', 'text');
 inputField.setAttribute('placeholder', 'Escribe un mensaje...');
-inputField.style.cssText = 'width: calc(100% - 20px); padding: 10px; margin-bottom: 10px; border: 1px solid #ccc; border-radius: 5px; box-sizing: border-box; background-color: #ffffff; color: #000;';
+inputField.style.cssText = 'flex: 1; padding: 15px; margin-right: 10px; border: 1px solid #ccc; border-radius: 8px; box-sizing: border-box; background-color: #ffffff; color: #000;'; // Aumentamos el tamaño de la barra para escribir
 inputContainer.appendChild(inputField);
 
 const sendButton = document.createElement('button');
 sendButton.textContent = 'Enviar';
-sendButton.style.cssText = 'width: calc(100% - 20px); padding: 10px; border: none; border-radius: 5px; cursor: pointer; background-color: #4CAF50; color: #ffffff;';
+sendButton.style.cssText = 'padding: 15px 30px; margin-left: 10px; border: none; border-radius: 8px; cursor: pointer; background-color: #4CAF50; color: #ffffff;'; // Aumentamos el tamaño del botón de enviar y agregamos un margen izquierdo
 inputContainer.appendChild(sendButton);
 
 // Crear botón de cambio de modo
 const modeToggleButton = document.createElement('button');
 modeToggleButton.textContent = 'Cambiar Modo';
-modeToggleButton.style.cssText = 'width: 100%; padding: 10px; margin-top: 10px; background-color: #4CAF50; color: white; border: none; border-radius: 5px; cursor: pointer;';
+modeToggleButton.style.cssText = 'padding: 15px 30px; background-color: #4CAF50; color: white; border: none; border-radius: 8px; cursor: pointer; margin-right: 10px;'; // Aumentamos el tamaño del botón de cambiar modo y agregamos un margen derecho
 inputContainer.appendChild(modeToggleButton);
 
 // Crear flecha para ir al último mensaje
