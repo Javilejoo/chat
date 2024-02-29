@@ -13,6 +13,130 @@ function applyColors(isDarkMode) {
   inputField.style.color = colors.inputText;
 }
 
+// Función para transformar los links en imágenes
+function isImageURL(url) {
+  return url.match(/\.(jpeg|jpg|gif|png)$/) != null;
+}
+
+// Función para analizar el texto del mensaje y crear vistas previas de enlaces
+function parseMessageText(messageText) {
+  // Expresión regular para detectar enlaces en el texto
+  const urlRegex = /((http|https):\/\/[^\s]+)(?=\s|$)/g;
+
+  const links = messageText.match(urlRegex);
+
+  if (links) {
+    // Si se detectan enlaces, reemplazarlos con elementos de enlace clicables o imágenes
+    const messageParts = messageText.split(urlRegex);
+    const messageWithLinks = [];
+
+    messageParts.forEach((part, index) => {
+      if (links.includes(part)) {
+        const isLastLink = index === messageParts.length - 1;
+        const isImage = isImageURL(part);
+
+        if (isLastLink && !isImage) {
+          // Si es el último enlace y no es una imagen, simplemente agregar el texto del enlace
+          messageWithLinks.push(document.createTextNode(part));
+        } else {
+          if (isImage) {
+            // Si el enlace es una imagen, crear un elemento de imagen
+            const imageElement = document.createElement('img');
+            imageElement.src = part;
+            imageElement.style.maxWidth = '100%'; // Ajustar el tamaño máximo de la imagen
+            imageElement.style.height = 'auto'; // Ajustar la altura automáticamente según el ancho
+            messageWithLinks.push(imageElement);
+          } else {
+            // Si no es una imagen, crear un enlace cliclable con el texto del enlace
+            const linkElement = document.createElement('a');
+            linkElement.href = part;
+            linkElement.target = '_blank'; // Abrir enlace en una nueva pestaña
+            linkElement.rel = 'noopener noreferrer'; // Añadir atributos de seguridad
+            linkElement.textContent = part; // Mostrar el enlace como texto
+            messageWithLinks.push(linkElement);
+
+            // Generar una vista previa del enlace
+            const linkPreview = createLinkPreview(part);
+            messageWithLinks.push(linkPreview);
+          }
+        }
+      } else if (part !== '') {
+        messageWithLinks.push(document.createTextNode(part));
+      }
+    });
+
+    return messageWithLinks;
+  } else {
+    // Si no se detectan enlaces, simplemente devolver el texto como un nodo de texto
+    return [document.createTextNode(messageText)];
+  }
+}
+
+// Función para crear una vista previa del enlace
+function createLinkPreview(link) {
+  const linkPreview = document.createElement('div');
+  linkPreview.style.marginTop = '5px'; // Añadir un margen superior
+
+  // Aquí puedes personalizar la apariencia de la vista previa del enlace
+  linkPreview.innerHTML = `
+    <div style="border: 1px solid #ccc; border-radius: 8px; padding: 10px;">
+      <p style="margin: 0; font-weight: bold;">Vista previa del enlace:</p>
+      <p>${link}</p>
+    </div>
+  `;
+
+  return linkPreview;
+}
+
+// Función para obtener y mostrar mensajes desde la API con capacidad de búsqueda
+function fetchAndDisplayMessages(searchText = '') {
+  fetch('http://uwu-guate.site:3000/messages')
+    .then(response => response.json())
+    .then(messages => {
+      const filteredMessages = filterMessages(messages, searchText); // Filtrar mensajes
+      displayMessages(filteredMessages); // Mostrar mensajes filtrados
+    })
+    .catch(error => {
+      console.error('Error fetching messages:', error);
+    });
+}
+
+// Función para filtrar los mensajes según el texto de búsqueda
+function filterMessages(messages, searchText) {
+  return messages.filter(message => {
+    const [, , messageText] = message;
+    return messageText.toLowerCase().includes(searchText.toLowerCase()); // Filtrar mensajes que contienen el texto de búsqueda
+  });
+}
+
+// Función para mostrar los mensajes en el chat
+function displayMessages(messages) {
+  chatMessages.innerHTML = ''; // Limpiar mensajes anteriores
+  
+  messages.forEach(message => {
+    const [, sender, messageText, timestamp] = message;
+
+    const messageContainer = document.createElement('div');
+    messageContainer.style.display = 'block'; // Ajuste para que cada mensaje esté en una línea separada
+    
+    const senderElement = document.createElement('div');
+    senderElement.textContent = sender + ":";
+    senderElement.style.fontWeight = 'bold';
+    messageContainer.appendChild(senderElement);
+
+    const parsedMessage = parseMessageText(messageText);
+
+    // Agregar los nodos de texto y las vistas previas al contenedor de mensajes
+    parsedMessage.forEach(node => {
+      messageContainer.appendChild(node);
+    });
+
+    chatMessages.appendChild(messageContainer);
+  });
+
+  chatMessages.scrollTop = chatMessages.scrollHeight;
+}
+
 // Crear elementos de chat
 const userListContainer = document.createElement('div');
 userListContainer.style.cssText = 'width: 20%; height: 100vh; overflow-y: auto; padding: 20px; box-sizing: border-box; background-color: #f0f0f0; position: fixed; top: 0; left: 0;';
@@ -50,6 +174,21 @@ sendButton.textContent = 'Enviar';
 sendButton.style.cssText = 'padding: 15px 30px; margin-left: 10px; border: none; border-radius: 8px; cursor: pointer; background-color: #4CAF50; color: #ffffff;'; // Aumentamos el tamaño del botón de enviar y agregamos un margen izquierdo
 inputContainer.appendChild(sendButton);
 
+// Crear campo de búsqueda de mensajes
+const searchInput = document.createElement('input');
+searchInput.setAttribute('type', 'text');
+searchInput.setAttribute('placeholder', 'Buscar mensajes...');
+searchInput.style.cssText = 'width: 100%; padding: 10px; border: 1px solid #ccc; border-radius: 8px; box-sizing: border-box; margin-bottom: 10px;';
+
+// Insertar campo de búsqueda en el contenedor de entrada
+inputContainer.insertBefore(searchInput, inputField);
+
+// Evento de entrada para buscar mensajes mientras escribes
+searchInput.addEventListener('input', function() {
+  const searchText = this.value.trim(); // Obtener texto de búsqueda
+  fetchAndDisplayMessages(searchText); // Obtener y mostrar mensajes filtrados
+});
+
 // Crear botón de cambio de modo
 const modeToggleButton = document.createElement('button');
 modeToggleButton.textContent = 'Cambiar Modo';
@@ -61,6 +200,12 @@ const arrowButton = document.createElement('button');
 arrowButton.innerHTML = '&#8595;'; // Código de la flecha hacia abajo
 arrowButton.style.cssText = 'position: fixed; bottom: 20px; right: 20px; font-size: 20px; background-color: #4CAF50; color: white; border: none; border-radius: 5px; cursor: pointer; padding: 10px;';
 document.body.appendChild(arrowButton);
+
+// Crear contador de caracteres
+const characterCounter = document.createElement('div');
+characterCounter.textContent = '0/140'; // Inicialmente, muestra 0 caracteres de 140
+characterCounter.style.cssText = 'color: #999;'; // Estilo del contador de caracteres
+inputContainer.appendChild(characterCounter); // Agrega el contador al contenedor de entrada
 
 // Función para cambiar el modo
 function toggleMode() {
@@ -75,21 +220,70 @@ modeToggleButton.addEventListener('click', toggleMode);
 // Función para enviar un mensaje
 function sendMessage() {
   const messageText = inputField.value.trim();
-  const maxChars = 140; // Máximo de caracteres permitidos
+  const maxChars = 139; // Máximo de caracteres permitidos
   if (messageText !== '') {
     if (messageText.length <= maxChars) {
       const messageBubble = document.createElement('div');
-      messageBubble.textContent = messageText;
-      messageBubble.style.cssText = 'padding: 10px; margin: 5px 0; border-radius: 10px; background-color: #0084FF; color: #ffffff;';
+      
+      // Agregar el nombre del remitente arriba del mensaje
+      const senderName = document.createElement('div');
+      senderName.textContent = 'javilejo';
+      senderName.style.fontWeight = 'bold';
+      messageBubble.appendChild(senderName);
+
+      // Agregar el contenido del mensaje
+      const messageContent = parseMessageText(messageText); // Parsear el texto del mensaje
+      messageContent.forEach(node => {
+        messageBubble.appendChild(node); // Agregar cada nodo al contenedor del mensaje
+      });
+
+      // Aplicar estilos para el mensaje enviado
+      messageBubble.style.cssText = `
+        padding: 10px; 
+        margin: 5px 0; 
+        border-radius: 10px; 
+        background-color: #0084FF; 
+        color: #ffffff;
+        align-self: flex-end; /* Alinear el mensaje a la derecha */
+        max-width: 70%; /* Limitar el ancho del mensaje */
+        margin-left: auto; /* Mover el mensaje hacia la derecha */
+      `;
+
       chatMessages.appendChild(messageBubble);
       inputField.value = '';
       chatMessages.scrollTop = chatMessages.scrollHeight;
     } else {
-      // Cambiar color del texto si se supera el límite de caracteres
-      inputField.style.color = 'red';
+      // Mostrar mensaje de error si se supera el límite de caracteres
+      alert('El mensaje no puede tener más de 140 caracteres.');
     }
+  } else {
+    // Mostrar mensaje de error si el campo está vacío
+    alert('Por favor, escribe un mensaje.');
+  }
+  
+  // Actualizar el contador de caracteres
+  countCharacters();
+}
+
+
+
+
+// Función para contar caracteres del mensaje y actualizar el contador
+function countCharacters() {
+  const messageText = inputField.value.trim();
+  const remainingChars = messageText.length;
+  characterCounter.textContent = remainingChars + '/140';
+  if (remainingChars > 139) {
+    characterCounter.style.color = 'red'; // Cambiar color del contador si se excede el límite
+    // Deshabilitar la entrada de más caracteres cuando se alcanza el límite
+    inputField.value = inputField.value.slice(0, 139);
+  } else {
+    characterCounter.style.color = ''; // Restablecer color del contador si está dentro del límite
   }
 }
+
+// Evento de entrada para contar caracteres mientras escribes
+inputField.addEventListener('input', countCharacters);
 
 // Evento de clic para enviar mensaje
 sendButton.addEventListener('click', sendMessage);
@@ -105,6 +299,12 @@ inputField.addEventListener('keypress', function(event) {
 arrowButton.addEventListener('click', function() {
   chatMessages.scrollTop = chatMessages.scrollHeight;
 });
+
+// Llamar a la función para mostrar mensajes al cargar la página
+fetchAndDisplayMessages();
+
+// Llamar a la función para contar caracteres al inicio
+countCharacters();
 
 // Ejemplo: Agregar algunos usuarios a la lista
 const users = ['Usuario1', 'Usuario2', 'Usuario3', 'Usuario4', 'Usuario5'];
