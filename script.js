@@ -104,8 +104,8 @@ function fetchAndDisplayMessages(searchText = '') {
 // Función para filtrar los mensajes según el texto de búsqueda
 function filterMessages(messages, searchText) {
   return messages.filter(message => {
-    const [, , messageText] = message;
-    return messageText.toLowerCase().includes(searchText.toLowerCase()); // Filtrar mensajes que contienen el texto de búsqueda
+    const { content } = message;
+    return content.toLowerCase().includes(searchText.toLowerCase()); // Filtrar mensajes que contienen el texto de búsqueda
   });
 }
 
@@ -114,17 +114,17 @@ function displayMessages(messages) {
   chatMessages.innerHTML = ''; // Limpiar mensajes anteriores
   
   messages.forEach(message => {
-    const [, sender, messageText, timestamp] = message;
+    const { username, content } = message;
 
     const messageContainer = document.createElement('div');
     messageContainer.style.display = 'block'; // Ajuste para que cada mensaje esté en una línea separada
     
     const senderElement = document.createElement('div');
-    senderElement.textContent = sender + ":";
+    senderElement.textContent = username + ":";
     senderElement.style.fontWeight = 'bold';
     messageContainer.appendChild(senderElement);
 
-    const parsedMessage = parseMessageText(messageText);
+    const parsedMessage = parseMessageText(content);
 
     // Agregar los nodos de texto y las vistas previas al contenedor de mensajes
     parsedMessage.forEach(node => {
@@ -265,9 +265,6 @@ function sendMessage() {
   countCharacters();
 }
 
-
-
-
 // Función para contar caracteres del mensaje y actualizar el contador
 function countCharacters() {
   const messageText = inputField.value.trim();
@@ -303,6 +300,31 @@ arrowButton.addEventListener('click', function() {
 // Llamar a la función para mostrar mensajes al cargar la página
 fetchAndDisplayMessages();
 
+// Función para obtener y mostrar mensajes desde la API con capacidad de búsqueda
+function fetchAndDisplayMessages(searchText = '') {
+  fetch('http://uwu-guate.site:3000/messages')
+    .then(response => response.json())
+    .then(messages => {
+      const filteredMessages = filterMessages(messages, searchText); // Filtrar mensajes
+      displayMessages(filteredMessages); // Mostrar mensajes filtrados
+    })
+    .catch(error => {
+      console.error('Error fetching messages:', error);
+    });
+}
+
+// Función para refrescar automáticamente la lista de mensajes cada 5 segundos
+function refreshMessages() {
+  fetchAndDisplayMessages(); // Obtener y mostrar mensajes
+}
+
+// Llamar a la función para refrescar los mensajes inicialmente
+refreshMessages();
+
+// Establecer un intervalo para refrescar automáticamente la lista de mensajes cada 5 segundos
+setInterval(refreshMessages, 5000);
+
+
 // Llamar a la función para contar caracteres al inicio
 countCharacters();
 
@@ -320,17 +342,18 @@ const darkModeColors = {
   headerText: '#b9bbbe',
   buttonBackground: '#7289da',
   inputBackground: '#40444b',
-  inputText: '#b9bbbe',
+  inputText: '#dcddde',
 };
 
 // Paleta de colores para modo claro
 const lightModeColors = {
-  background: '#e5ddd5',
-  headerText: '#075e54',
-  buttonBackground: '#128C7E',
-  inputBackground: '#fff',
-  inputText: '#000',
+  background: '#f0f0f0',
+  headerText: '#000000',
+  buttonBackground: '#4CAF50',
+  inputBackground: '#ffffff',
+  inputText: '#000000',
 };
 
-// Aplicar colores iniciales según el modo actual
-applyColors(false); // Modo claro por defecto
+// Aplicar colores según el modo actual al cargar la página
+const isDarkMode = document.body.classList.contains('dark-mode');
+applyColors(isDarkMode);
