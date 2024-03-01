@@ -252,6 +252,9 @@ function sendMessage() {
       chatMessages.appendChild(messageBubble);
       inputField.value = '';
       chatMessages.scrollTop = chatMessages.scrollHeight;
+
+      // Enviar el mensaje a la API
+      sendMessagetoAPI(senderName.textContent, messageText);
     } else {
       // Mostrar mensaje de error si se supera el límite de caracteres
       alert('El mensaje no puede tener más de 140 caracteres.');
@@ -263,6 +266,25 @@ function sendMessage() {
   
   // Actualizar el contador de caracteres
   countCharacters();
+}
+
+// Función para enviar mensaje a la API
+function sendMessagetoAPI(username, message) {
+  const data = {
+    username: username,
+    message: message
+  };
+
+  fetch('http://uwu-guate.site:3000/messages', {
+    method: 'POST',
+    headers: {
+      'Content-Type': 'application/json'
+    },
+    body: JSON.stringify(data)
+  })
+  .then(response => response.json())
+  .then(data => console.log('Mensaje enviado:', data))
+  .catch(error => console.error('Error al enviar mensaje:', error));
 }
 
 // Función para contar caracteres del mensaje y actualizar el contador
@@ -299,19 +321,6 @@ arrowButton.addEventListener('click', function() {
 
 // Llamar a la función para mostrar mensajes al cargar la página
 fetchAndDisplayMessages();
-
-// Función para obtener y mostrar mensajes desde la API con capacidad de búsqueda
-function fetchAndDisplayMessages(searchText = '') {
-  fetch('http://uwu-guate.site:3000/messages')
-    .then(response => response.json())
-    .then(messages => {
-      const filteredMessages = filterMessages(messages, searchText); // Filtrar mensajes
-      displayMessages(filteredMessages); // Mostrar mensajes filtrados
-    })
-    .catch(error => {
-      console.error('Error fetching messages:', error);
-    });
-}
 
 // Función para refrescar automáticamente la lista de mensajes cada 5 segundos
 function refreshMessages() {
@@ -357,3 +366,4 @@ const lightModeColors = {
 // Aplicar colores según el modo actual al cargar la página
 const isDarkMode = document.body.classList.contains('dark-mode');
 applyColors(isDarkMode);
+
