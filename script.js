@@ -2,6 +2,12 @@
 document.body.style.margin = '0';
 document.body.style.fontFamily = 'Arial, sans-serif';
 
+// Variable para rastrear si el usuario ha desplazado manualmente hacia arriba
+let userScrolledUp = false;
+
+// Variable para almacenar el número de mensajes actualmente mostrados
+let numMessagesDisplayed = 0;
+
 // Función para aplicar los colores del modo
 function applyColors(isDarkMode) {
   const colors = isDarkMode ? darkModeColors : lightModeColors;
@@ -90,11 +96,33 @@ function createLinkPreview(link) {
 
 // Función para obtener y mostrar mensajes desde la API con capacidad de búsqueda
 function fetchAndDisplayMessages(searchText = '') {
+  // Guardar la posición actual de desplazamiento
+  const scrollPosition = chatMessages.scrollTop;
+
   fetch('http://uwu-guate.site:3000/messages')
     .then(response => response.json())
     .then(messages => {
       const filteredMessages = filterMessages(messages, searchText); // Filtrar mensajes
       displayMessages(filteredMessages); // Mostrar mensajes filtrados
+
+      // Obtener el número actual de mensajes mostrados
+      const newNumMessagesDisplayed = filteredMessages.length;
+
+      // Restaurar la posición de desplazamiento después de actualizar los mensajes
+      if (!userScrolledUp) {
+        // Solo desplazar hacia abajo si hay nuevos mensajes
+        if (newNumMessagesDisplayed > numMessagesDisplayed) {
+          chatMessages.scrollTop = chatMessages.scrollHeight;
+        }
+      } else {
+        // Solo desplazate hacia abajo si no hay un nuevo mensaje
+        if (scrollPosition === 0) {
+          chatMessages.scrollTop = chatMessages.scrollHeight;
+        }
+      }
+
+      // Actualizar el número de mensajes actualmente mostrados
+      numMessagesDisplayed = newNumMessagesDisplayed;
     })
     .catch(error => {
       console.error('Error fetching messages:', error);
@@ -130,6 +158,31 @@ function displayMessages(messages) {
     parsedMessage.forEach(node => {
       messageContainer.appendChild(node);
     });
+
+    // Aplicar estilos y clase CSS según el usuario
+    if (username === 'javilejo') {
+      messageContainer.style.cssText = `
+        padding: 10px; 
+        margin: 5px 0; 
+        border-radius: 10px; 
+        background-color: #0084FF; 
+        color: #ffffff;
+        align-self: flex-end; /* Alinear el mensaje a la derecha */
+        max-width: 70%; /* Limitar el ancho del mensaje */
+        margin-left: auto; /* Mover el mensaje hacia la derecha */
+      `;
+    } else {
+      messageContainer.style.cssText = `
+        padding: 10px; 
+        margin: 5px 0; 
+        border-radius: 10px; 
+        background-color: #4CAF50; 
+        color: #ffffff;
+        align-self: flex-start; /* Alinear el mensaje a la izquierda */
+        max-width: 70%; /* Limitar el ancho del mensaje */
+        margin-right: auto; /* Mover el mensaje hacia la izquierda */
+      `;
+    }
 
     chatMessages.appendChild(messageContainer);
   });
@@ -319,6 +372,11 @@ arrowButton.addEventListener('click', function() {
   chatMessages.scrollTop = chatMessages.scrollHeight;
 });
 
+// Evento de desplazamiento para rastrear si el usuario ha desplazado manualmente hacia arriba
+chatMessages.addEventListener('scroll', function() {
+  userScrolledUp = this.scrollTop > 0;
+});
+
 // Llamar a la función para mostrar mensajes al cargar la página
 fetchAndDisplayMessages();
 
@@ -327,23 +385,31 @@ function refreshMessages() {
   fetchAndDisplayMessages(); // Obtener y mostrar mensajes
 }
 
-// Llamar a la función para refrescar los mensajes inicialmente
-refreshMessages();
-
 // Establecer un intervalo para refrescar automáticamente la lista de mensajes cada 5 segundos
 setInterval(refreshMessages, 5000);
-
 
 // Llamar a la función para contar caracteres al inicio
 countCharacters();
 
 // Ejemplo: Agregar algunos usuarios a la lista
-const users = ['Usuario1', 'Usuario2', 'Usuario3', 'Usuario4', 'Usuario5'];
-users.forEach(user => {
-  const listItem = document.createElement('li');
-  listItem.textContent = user;
-  userList.appendChild(listItem);
-});
+fetch('http://uwu-guate.site:3000/messages')
+  .then(response => response.json())
+  .then(users => {
+    const uniqueUsers = new Set(); // Conjunto para almacenar nombres de usuario únicos
+    users.forEach(user => {
+      uniqueUsers.add(user.username); // Agregar cada nombre de usuario al conjunto
+    });
+    // Iterar sobre el conjunto de nombres de usuario para crear los elementos de la lista de usuarios
+    uniqueUsers.forEach(username => {
+      const listItem = document.createElement('li');
+      listItem.textContent = username;
+      userList.appendChild(listItem);
+    });
+  })
+  .catch(error => {
+    console.error('Error fetching users:', error);
+  });
+
 
 // Paleta de colores para modo oscuro
 const darkModeColors = {
@@ -366,4 +432,3 @@ const lightModeColors = {
 // Aplicar colores según el modo actual al cargar la página
 const isDarkMode = document.body.classList.contains('dark-mode');
 applyColors(isDarkMode);
-
