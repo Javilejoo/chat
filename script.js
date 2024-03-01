@@ -95,38 +95,37 @@ function createLinkPreview(link) {
 }
 
 // Función para obtener y mostrar mensajes desde la API con capacidad de búsqueda
-function fetchAndDisplayMessages(searchText = '') {
+async function fetchAndDisplayMessages(searchText = '') {
   // Guardar la posición actual de desplazamiento
   const scrollPosition = chatMessages.scrollTop;
 
-  fetch('http://uwu-guate.site:3000/messages')
-    .then(response => response.json())
-    .then(messages => {
-      const filteredMessages = filterMessages(messages, searchText); // Filtrar mensajes
-      displayMessages(filteredMessages); // Mostrar mensajes filtrados
+  try {
+    const response = await fetch('http://uwu-guate.site:3000/messages');
+    const messages = await response.json();
+    const filteredMessages = filterMessages(messages, searchText); // Filtrar mensajes
+    displayMessages(filteredMessages); // Mostrar mensajes filtrados
 
-      // Obtener el número actual de mensajes mostrados
-      const newNumMessagesDisplayed = filteredMessages.length;
+    // Obtener el número actual de mensajes mostrados
+    const newNumMessagesDisplayed = filteredMessages.length;
 
-      // Restaurar la posición de desplazamiento después de actualizar los mensajes
-      if (!userScrolledUp) {
-        // Solo desplazar hacia abajo si hay nuevos mensajes
-        if (newNumMessagesDisplayed > numMessagesDisplayed) {
-          chatMessages.scrollTop = chatMessages.scrollHeight;
-        }
-      } else {
-        // Solo desplazate hacia abajo si no hay un nuevo mensaje
-        if (scrollPosition === 0) {
-          chatMessages.scrollTop = chatMessages.scrollHeight;
-        }
+    // Restaurar la posición de desplazamiento después de actualizar los mensajes
+    if (!userScrolledUp) {
+      // Solo desplazar hacia abajo si hay nuevos mensajes
+      if (newNumMessagesDisplayed > numMessagesDisplayed) {
+        chatMessages.scrollTop = chatMessages.scrollHeight;
       }
+    } else {
+      // Solo desplazate hacia abajo si no hay un nuevo mensaje
+      if (scrollPosition === 0) {
+        chatMessages.scrollTop = chatMessages.scrollHeight;
+      }
+    }
 
-      // Actualizar el número de mensajes actualmente mostrados
-      numMessagesDisplayed = newNumMessagesDisplayed;
-    })
-    .catch(error => {
-      console.error('Error fetching messages:', error);
-    });
+    // Actualizar el número de mensajes actualmente mostrados
+    numMessagesDisplayed = newNumMessagesDisplayed;
+  } catch (error) {
+    console.error('Error fetching messages:', error);
+  }
 }
 
 // Función para filtrar los mensajes según el texto de búsqueda
@@ -271,7 +270,7 @@ function toggleMode() {
 modeToggleButton.addEventListener('click', toggleMode);
 
 // Función para enviar un mensaje
-function sendMessage() {
+async function sendMessage() {
   const messageText = inputField.value.trim();
   const maxChars = 139; // Máximo de caracteres permitidos
   if (messageText !== '') {
@@ -307,7 +306,7 @@ function sendMessage() {
       chatMessages.scrollTop = chatMessages.scrollHeight;
 
       // Enviar el mensaje a la API
-      sendMessagetoAPI(senderName.textContent, messageText);
+      await sendMessagetoAPI(senderName.textContent, messageText);
     } else {
       // Mostrar mensaje de error si se supera el límite de caracteres
       alert('El mensaje no puede tener más de 140 caracteres.');
@@ -322,22 +321,25 @@ function sendMessage() {
 }
 
 // Función para enviar mensaje a la API
-function sendMessagetoAPI(username, message) {
+async function sendMessagetoAPI(username, message) {
   const data = {
     username: username,
     message: message
   };
 
-  fetch('http://uwu-guate.site:3000/messages', {
-    method: 'POST',
-    headers: {
-      'Content-Type': 'application/json'
-    },
-    body: JSON.stringify(data)
-  })
-  .then(response => response.json())
-  .then(data => console.log('Mensaje enviado:', data))
-  .catch(error => console.error('Error al enviar mensaje:', error));
+  try {
+    const response = await fetch('http://uwu-guate.site:3000/messages', {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json'
+      },
+      body: JSON.stringify(data)
+    });
+    const responseData = await response.json();
+    console.log('Mensaje enviado:', responseData);
+  } catch (error) {
+    console.error('Error al enviar mensaje:', error);
+  }
 }
 
 // Función para contar caracteres del mensaje y actualizar el contador
@@ -381,8 +383,8 @@ chatMessages.addEventListener('scroll', function() {
 fetchAndDisplayMessages();
 
 // Función para refrescar automáticamente la lista de mensajes cada 5 segundos
-function refreshMessages() {
-  fetchAndDisplayMessages(); // Obtener y mostrar mensajes
+async function refreshMessages() {
+  await fetchAndDisplayMessages(); // Obtener y mostrar mensajes
 }
 
 // Establecer un intervalo para refrescar automáticamente la lista de mensajes cada 5 segundos
